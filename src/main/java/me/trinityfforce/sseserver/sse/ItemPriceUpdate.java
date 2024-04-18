@@ -8,7 +8,6 @@ import lombok.Getter;
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ItemPriceUpdate {
-
     private final Long itemId;
     private final Integer price;
 
