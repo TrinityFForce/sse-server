@@ -19,12 +19,16 @@ public class RedisSubscriber implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        // 메시지에서 데이터 추출
-        String messageBody = new String(message.getBody());
-        ItemPriceUpdate update = convertMessageBodyToItemPriceUpdate(messageBody);
+        try {
+            // 메시지에서 데이터 추출
+            String messageBody = new String(message.getBody());
+            ItemPriceUpdate update = convertMessageBodyToItemPriceUpdate(messageBody);
 
-        // SSE 컨트롤러를 통해 연결된 클라이언트에게 메시지 전송
-        sseController.sendItemUpdate(update.getItemId(), update.getPrice());
+            // SSE 컨트롤러를 통해 연결된 클라이언트에게 메시지 전송
+            sseController.sendItemUpdate(update.getItemId(), update.getPrice());
+        } catch (Exception e) {
+            System.err.println("에러 발생 : " + e.getMessage()); // 메시지 발송 실패 디버그
+        }
     }
 
     private ItemPriceUpdate convertMessageBodyToItemPriceUpdate(String messageBody) {

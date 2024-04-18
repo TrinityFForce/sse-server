@@ -52,6 +52,7 @@ public class SseController {
         emitter.onError((e) -> removeSubscriber(itemId, emitter));
 
         emitters.computeIfAbsent(itemId, k -> new ArrayList<>()).add(emitter);
+//        emitters.computeIfAbsent(itemId, k -> Collections.synchronizedList(new ArrayList<>())).add(emitter); // synchronizedList 사용
 
         return emitter;
     }
@@ -59,16 +60,24 @@ public class SseController {
     public void sendItemUpdate(Long itemId, Object data) {
         List<SseEmitter> subscribers = emitters.getOrDefault(itemId, Collections.emptyList());
 
-        if (subscribers != null) {
-            subscribers.forEach(s -> {
-                try {
-                    if (s != null) {
-                        s.send(SseEmitter.event().name("itemUpdate").data(data).build());
-                    }
-                } catch (IOException e) {
-                    s.completeWithError(e);
-                }
-            });
+//        if (subscribers != null) {
+//            subscribers.forEach(s -> {
+//                try {
+//                    if (s != null) {
+//                        s.send(SseEmitter.event().name("itemUpdate").data(data).build());
+//                    }
+//                } catch (IOException e) {
+//                    s.completeWithError(e);
+//                }
+//            });
+//        }
+        for (SseEmitter s : new ArrayList<>(subscribers)) {
+            try {
+                s.send(SseEmitter.event().name("itemUpdate").data(data).build());
+            } catch (IOException e) {
+                removeSubscriber(itemId, s);
+                s.completeWithError(e);
+            }
         }
     }
 
@@ -76,6 +85,9 @@ public class SseController {
         List<SseEmitter> subscribers = emitters.get(room);
         if (subscribers != null) {
             subscribers.remove(emitter);
+            if (subscribers.isEmpty()) { // 구독자만 지우는게 아니라 emitters 까지 같이 삭제
+                emitters.remove(room);
+            }
         }
     }
 }
